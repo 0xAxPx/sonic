@@ -1,0 +1,42 @@
+# Environment variables
+.env
+
+# Docker
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+
+# Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Node
+node_modules/
+npm-debug.log*
+build/
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ML Models
+ml-service/model/*.pkl
+ml-service/model/*.joblib
+
+# Database
+postgres_data/

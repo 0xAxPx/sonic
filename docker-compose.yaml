@@ -6,19 +6,21 @@ services:
     image: postgres:14-alpine
     container_name: threat-detector-db
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: threat_detector
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - threat-detector-network
 
   # Redis Cache
   redis:
@@ -31,6 +33,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - threat-detector-network
 
   # ML Model Service (Python/FastAPI)
   ml-service:
@@ -41,10 +45,8 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - MODEL_PATH=/app/model/rf_model.pkl
-      - LOG_LEVEL=info
-    volumes:
-      - ./ml-service:/app
+      - MODEL_PATH=${MODEL_PATH}
+      - LOG_LEVEL=${LOG_LEVEL}
     depends_on:
       - postgres
       - redis
@@ -53,6 +55,8 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    networks:
+      - threat-detector-network
 
   # Data Ingestion Service (Go)
   ingestion-service:
@@ -63,9 +67,9 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/threat_detector?sslmode=disable
-      - REDIS_URL=redis:6379
-      - ML_SERVICE_URL=http://ml-service:8000
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - ML_SERVICE_URL=${ML_SERVICE_URL}
     depends_on:
       postgres:
         condition: service_healthy
@@ -73,8 +77,8 @@ services:
         condition: service_healthy
       ml-service:
         condition: service_healthy
-    volumes:
-      - ./ingestion-service:/app
+    networks:
+      - threat-detector-network
 
   # API Gateway (Go)
   api-gateway:
@@ -85,11 +89,11 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/threat_detector?sslmode=disable
-      - REDIS_URL=redis:6379
-      - INGESTION_SERVICE_URL=http://ingestion-service:8080
-      - JWT_SECRET=your-secret-key-change-in-production
-      - API_KEY=dev-api-key-12345
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - INGESTION_SERVICE_URL=${INGESTION_SERVICE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - API_KEY=${API_KEY}
     depends_on:
       postgres:
         condition: service_healthy
@@ -97,28 +101,27 @@ services:
         condition: service_healthy
       ingestion-service:
         condition: service_started
-    volumes:
-      - ./api-gateway:/app
+    networks:
+      - threat-detector-network
 
   # React Dashboard
   dashboard:
     build:
       context: ./dashboard
       dockerfile: Dockerfile
+      args:
+        - REACT_APP_API_URL=${REACT_APP_API_URL}
     container_name: threat-detector-dashboard
     ports:
       - "80:80"
-    environment:
-      - REACT_APP_API_URL=http://localhost:3000/api/v1
     depends_on:
       - api-gateway
-    volumes:
-      - ./dashboard:/app
-      - /app/node_modules
+    networks:
+      - threat-detector-network
 
 volumes:
   postgres_data:
 
 networks:
-  default:
-    name: threat-detector-network
+  threat-detector-network:
+    driver: bridge
