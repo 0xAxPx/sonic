@@ -283,11 +283,12 @@ The ML service starts without a model but can't make predictions. You need to:
 
 ---
 
-## 📈 Current Status
+## 📊 Current Metrics
 
-**✅ Phase 1 Complete:** MVP skeleton ready with all services containerized
-
-**⏳ Next Step:** Train ML model with NSL-KDD dataset
+- **Services:** 6/6 running ✅
+- **Test Coverage:** TBD
+- **API Endpoints:** 15 (stubs)
+- **Model Accuracy:** Pending training
 
 ---
 
