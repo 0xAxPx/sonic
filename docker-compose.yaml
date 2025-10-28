@@ -111,7 +111,7 @@ services:
         - REACT_APP_API_URL=${REACT_APP_API_URL}
     container_name: threat-detector-dashboard
     ports:
-      - "80:80"
+      - "8888:80"
     depends_on:
       - api-gateway
     networks:
