@@ -39,4 +39,6 @@ ml-service/model/*.pkl
 ml-service/model/*.joblib
 
 # Database
-postgres_data/
+postgres_data/ml-service/ml-venv/
+**/__pycache__/
+**/.ipynb_checkpoints/
